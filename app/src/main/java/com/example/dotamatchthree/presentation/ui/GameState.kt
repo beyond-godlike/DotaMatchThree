@@ -1,0 +1,12 @@
+package com.example.dotamatchthree.presentation.ui
+
+import com.example.dotamatchthree.presentation.ui.base.ViewState
+
+
+open class GameState : ViewState {
+    object IDLE : GameState()
+    object SWAPPING : GameState()
+    object CHECKSWAPPING : GameState()
+    object CRUSHING : GameState()
+    object UPDATE : GameState()
+}
