@@ -1,5 +1,5 @@
 # Dota Match Three
-## Compose & Canva
+## Compose & Canvas
 
 ![current](https://sun9-59.userapi.com/impg/vjcUNsK53uH3kTp3SnxafG0cXtfqDdMxNv65eQ/Ag94C_0liXo.jpg?size=720x1600&quality=95&sign=3b64e0f750006a10c9fee8745ddd0674&type=album)
 
