@@ -168,31 +168,41 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
             var j = 0
             while (j < board[0].size) {
                 if (board[i][j].color > 0) {
-                    if (j < board.size - 2 && board[i][j].color == board[i][j + 1].color && board[i][j + 1].color == board[i][j + 2].color) {
-                        search.add(ArrayList())
-                        search[search.size - 1].add(Point(i, j))
-                        search[search.size - 1].add(Point(i, j + 1))
-                        search[search.size - 1].add(Point(i, j + 2))
-                        j += 2
+                    var k = j + 1
+                    while (k < board.size && board[i][k].color == board[i][j].color) {
+                        k++
                     }
+                    if (k - j >= 3) {
+                        for (m in j until k) {
+                            search.add(ArrayList())
+                            search[search.size - 1].add(Point(i, m))
+                        }
+                    }
+                    j = k - 1
                 }
                 j++
             }
+
         }
         run {
             var i = 0
             while (i < board.size) {
-                for (j in board[0].indices) {
+                var j = 0
+                while (j < board[0].size) {
                     if (board[i][j].color > 0) {
-                        if (i < board.size - 2 && board[i][j].color == board[i + 1][j].color && board[i + 1][j].color == board[i + 2][j].color
-                        ) {
+                        var k = 0
+                        while (i + k < board.size && board[i][j].color == board[i + k][j].color) {
+                            k++
+                        }
+                        if (k >= 3) {
                             search.add(ArrayList())
-                            search[search.size - 1].add(Point(i, j))
-                            search[search.size - 1].add(Point(i + 1, j))
-                            search[search.size - 1].add(Point(i + 2, j))
-                            i += 2
+                            for (m in 0 until k) {
+                                search[search.size - 1].add(Point(i + m, j))
+                            }
+                            i += k - 1
                         }
                     }
+                    j++
                 }
                 i++
             }
