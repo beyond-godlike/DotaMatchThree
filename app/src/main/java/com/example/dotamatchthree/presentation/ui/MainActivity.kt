@@ -12,9 +12,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,10 +36,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -69,8 +82,11 @@ class MainActivity : ComponentActivity() {
             screenHeight = displayMetrics.heightPixels.toFloat()
 
             cellWidth = (screenWidth / 9)
-            drawX = ((screenWidth - cellWidth * 9) / 2)
-            drawY = (cellWidth * 4)
+            //drawX = ((screenWidth - cellWidth * 9) / 2)
+            //drawY = (cellWidth * 4)
+
+            drawX = 0.0f
+            drawY = 0.0f
 
             Column(
                 modifier = Modifier
@@ -90,7 +106,7 @@ fun Grid(viewModel: MainViewModel) {
     val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
     val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
 
-        //val mContext = LocalContext.current
+        val mContext = LocalContext.current
 
 
     var sec by remember {
@@ -104,13 +120,16 @@ fun Grid(viewModel: MainViewModel) {
         }
     })
 
+    TopPic(viewModel)
+
+    Spacer(modifier = Modifier.padding(16.dp))
+
     Canvas(
         modifier = Modifier
             .width((screenWidth - screenWidth / 5).dp)
             .height((cellWidth * 9).dp)
             .pointerInteropFilter {
                 when (it.action) {
-
                     MotionEvent.ACTION_DOWN -> {
                         viewModel.oldX = it.x
                         viewModel.oldY = it.y
@@ -118,9 +137,9 @@ fun Grid(viewModel: MainViewModel) {
                         viewModel.posJ = ((viewModel.oldX - drawX) / cellWidth).toInt()
                         viewModel.move = true
                     }
+
                     MotionEvent.ACTION_MOVE -> {
                         if (viewModel.state.value == GameState.IDLE) {
-                            //mToast(mContext, "move")
                             val newX = it.x
                             val newY = it.y
                             val deltaX = abs(newX - viewModel.oldX)
@@ -157,13 +176,6 @@ fun Grid(viewModel: MainViewModel) {
             },
 
         onDraw = {
-            drawImage(
-                image = top,
-                srcOffset = IntOffset(0, 0),
-                srcSize = IntSize(379, 133),
-                dstOffset = IntOffset(0, 0),
-                dstSize = IntSize(cellWidth.toInt() * 9, cellWidth.toInt() * 4)
-            )
             for (i in 0..9) {
                 for (j in 0..9) {
                     drawLine(
@@ -208,10 +220,32 @@ fun Grid(viewModel: MainViewModel) {
                 dstOffset = IntOffset(60, (drawY.toInt() + cellWidth.toInt() * 10)),
                 dstSize = IntSize((screenWidth - screenWidth / 5).toInt(), (cellWidth * 4).toInt())
             )
+
+
         },
         contentDescription = ""
     )
 }
+
+@Composable
+fun TopPic(viewModel: MainViewModel) {
+
+        TextButton(
+            onClick = { viewModel.newGame() },
+            modifier = Modifier
+                .width(379.dp)
+                .height(133.dp),
+            shape = RectangleShape
+        ) {
+            Image(
+                painter = painterResource(R.drawable.top),
+                contentDescription = "",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+}
+
 
 private fun DrawScope.drawHeroes(
     viewModel: MainViewModel,

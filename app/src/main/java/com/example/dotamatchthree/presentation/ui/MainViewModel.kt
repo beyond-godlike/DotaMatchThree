@@ -50,6 +50,10 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
     )
 
     init {
+        newGame()
+    }
+
+    fun newGame() {
         for (i in level.indices) {
             for (j in level[0].indices) {
                 level[i][j] = generateNewJewels()
