@@ -7,6 +7,8 @@ import com.example.dotamatchthree.data.Constants.drawY
 import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.presentation.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 
@@ -22,7 +24,6 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
     private var topBoard: Array<Hero> =  Array(9) { row ->
         Hero(0.0f, row.toFloat(), 0)
     }
-
     private val search: ArrayList<ArrayList<Point>> = ArrayList()
 
     var oldX = 0f
@@ -34,31 +35,53 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
     var newPosJ = 0
 
     var move = false
-    private var swapIndex = 8
+    var swapped = false
+    private var swapIndex = 3
     private var dropStop = true
 
     private var level = arrayOf(
         intArrayOf(7, 8, 9, 10, 4, 3, 1, 2, 4),
         intArrayOf(6, 1, 2, 4, 1, 3, 11, 11, 6),
-        intArrayOf(3, 4, 2, 5, 2, 3, 3, 1, 2),
-        intArrayOf(2, 1, 3, 3, 1, 5, 4, 5, 4),
+        intArrayOf(3, 3, 3, 5, 2, 3, 3, 1, 2),
+        intArrayOf(2, 1, 3, 3, 1, 5, 3, 3, 4),
         intArrayOf(2, 2, 5, 1, 1, 2, 6, 11, 2),
         intArrayOf(11, 3, 6, 1, 1, 3, 11, 2, 2),
-        intArrayOf(3, 6, 4, 2, 2, 4, 1, 11, 11),
+        intArrayOf(3, 6, 4, 2, 2, 4, 1, 3, 11),
         intArrayOf(2, 1, 6, 3, 3, 6, 5, 3, 4),
         intArrayOf(1, 6, 11, 2, 2, 3, 3, 5, 11)
     )
+
+    private var goalType = 3 // Int color
+
+    private val _moves = MutableStateFlow(8)
+    val moves = _moves.asStateFlow()
+
+    private val _goal = MutableStateFlow(6)
+    val goal = _goal.asStateFlow()
+
+    private fun setMoves(moves: Int) {
+        _moves.value = moves
+    }
+    private fun setGoal(goal: Int) {
+        _goal.value = goal
+    }
 
     init {
         newGame()
     }
 
     fun newGame() {
+        setMoves(8)
+        setGoal(6)
+
         for (i in level.indices) {
             for (j in level[0].indices) {
+                //load level from shared prefs
                 level[i][j] = generateNewJewels()
             }
         }
+
+
 
         for (i in level.indices) {
             for (j in level[0].indices) {
@@ -74,13 +97,16 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
     }
 
     private fun generateNewJewels(): Int {
-        return (Math.random() * 11 + 1).toInt()
+        //return (Math.random() * 11 + 1).toInt()
+        return (Math.random() * 8 + 1).toInt()
     }
 
 
     fun updateGame() {
         when (state.value) {
-            GameState.SWAPPING -> swap()
+            GameState.SWAPPING -> {
+                swap()
+            }
             GameState.CHECKSWAPPING -> {
                 fillCrushing()
                 if (search.isEmpty()) {
@@ -108,6 +134,8 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
             }
 
             GameState.UPDATE -> {
+                checkWin()
+
                 drop()
                 fillTopBoard()
                 fillCrushing()
@@ -122,6 +150,13 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
             }
             GameState.IDLE ->{}
         }
+    }
+    private fun checkWin() {
+        if(moves.value <= 0) {
+            if(goal.value > 0) updateState(GameState.LOSE)
+        }
+        if(goal.value <= 0)  updateState(GameState.WIN)
+
     }
 
     private fun swap() {
@@ -147,6 +182,7 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
                     board[posI][posJ].posY += cellWidth / 8
                 }
             }
+            //
             swapIndex--
         } else {
             val j: Hero = board[posI][posJ]
@@ -159,11 +195,20 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
             swapIndex = 8
             if(state.value == GameState.SWAPPING) {
                 updateState(GameState.CHECKSWAPPING)
+                // if swapped
+                if(swapped) {
+                    setMoves(moves.value - 1)
+                    swapped = false
+                }
             }
+            // not swapped
             else {
+                setMoves(moves.value + 1)
                 updateState(GameState.IDLE)
             }
         }
+
+        checkWin()
     }
 
     private fun fillCrushing() {
@@ -180,10 +225,12 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
                         for (m in j until k) {
                             search.add(ArrayList())
                             search[search.size - 1].add(Point(i, m))
+                            if(board[i][j].color == goalType)  setGoal(goal.value - 1)
                         }
                     }
-                    j = k - 1
                 }
+                // setSwapped
+                swapped = true
                 j++
             }
 
@@ -202,9 +249,12 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
                             search.add(ArrayList())
                             for (m in 0 until k) {
                                 search[search.size - 1].add(Point(i + m, j))
+                                if(board[i][j].color == goalType)  setGoal(goal.value - 1)
                             }
                             i += k - 1
                         }
+                        // setSwapped
+                        swapped = true
                     }
                     j++
                 }

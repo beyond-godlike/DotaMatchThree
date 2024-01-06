@@ -1,10 +1,12 @@
-@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class,
+@file:OptIn(
+    ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class,
     ExperimentalComposeUiApi::class
 )
 
 package com.example.dotamatchthree.presentation.ui
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.MotionEvent
 import android.widget.Toast
@@ -13,20 +15,21 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +40,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
@@ -46,7 +51,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberImagePainter
 import com.example.dotamatchthree.data.Constants.abbaddon
 import com.example.dotamatchthree.data.Constants.bane
 import com.example.dotamatchthree.data.Constants.bat
@@ -102,11 +109,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Grid(viewModel: MainViewModel) {
-    val top = ImageBitmap.imageResource(id = R.drawable.top)
     val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
     val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
 
-        val mContext = LocalContext.current
+    val mContext = LocalContext.current
 
 
     var sec by remember {
@@ -120,9 +126,25 @@ fun Grid(viewModel: MainViewModel) {
         }
     })
 
-    TopPic(viewModel)
+    when (viewModel.state.value) {
+        is GameState.WIN -> {
+            Column {
+                TopPic(viewModel)
+                Win()
+            }
+        }
 
-    Spacer(modifier = Modifier.padding(16.dp))
+        is GameState.LOSE -> {
+            Column {
+                TopPic(viewModel)
+                Lost()
+            }
+        }
+    }
+    TopPic(viewModel)
+    TopLabel(viewModel)
+
+    //Spacer(modifier = Modifier.padding(16.dp))
 
     Canvas(
         modifier = Modifier
@@ -167,6 +189,7 @@ fun Grid(viewModel: MainViewModel) {
                                     }
                                     viewModel.newPosJ = viewModel.posJ
                                 }
+                                // pass human
                                 viewModel.updateState(GameState.SWAPPING)
                             }
                         }
@@ -198,15 +221,19 @@ fun Grid(viewModel: MainViewModel) {
             when (viewModel.state.value) {
                 is GameState.IDLE -> {
                 }
+
                 is GameState.UPDATE -> {
                     viewModel.updateGame()
                 }
+
                 is GameState.CHECKSWAPPING -> {
                     viewModel.updateGame()
                 }
+
                 is GameState.SWAPPING -> {
                     viewModel.updateGame()
                 }
+
                 is GameState.CRUSHING -> {
                     viewModel.updateGame()
                 }
@@ -228,22 +255,64 @@ fun Grid(viewModel: MainViewModel) {
 }
 
 @Composable
+fun Win() {
+    Box(Modifier.fillMaxSize()) {
+        Text("WON", Modifier.padding(50.dp))
+    }
+}
+
+@Composable
+fun Lost() {
+    Box(Modifier.fillMaxSize()) {
+        Text("LOST", Modifier.padding(50.dp))
+    }
+}
+@Composable
+fun TopLabel(viewModel: MainViewModel) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(24.dp, 0.dp)) {
+        val subBitmap = imageBitmap()
+        val moves = viewModel.moves.collectAsState()
+        val goal = viewModel.goal.collectAsState()
+
+        Text(text = moves.value.toString(), Modifier.padding(0.dp, 10.dp), fontSize = 38.sp)
+        Spacer(modifier = Modifier.padding(98.dp, 0.dp))
+        Image(bitmap = subBitmap, contentDescription = "", Modifier.padding(0.dp, 8.dp).size(30.dp))
+        Text(text = "x " + goal.value.toString(), Modifier.padding(16.dp, 10.dp), fontSize = 20.sp)
+
+
+        // Score
+    }
+}
+
+@Composable
+private fun imageBitmap(): ImageBitmap {
+    val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
+
+    val subBitmap = piece.asAndroidBitmap().let {
+        Bitmap.createBitmap(it, cm.x, cm.y, jsz, jsz)
+    }.asImageBitmap()
+    return subBitmap
+}
+
+@Composable
 fun TopPic(viewModel: MainViewModel) {
 
-        TextButton(
-            onClick = { viewModel.newGame() },
-            modifier = Modifier
-                .width(379.dp)
-                .height(133.dp),
-            shape = RectangleShape
-        ) {
-            Image(
-                painter = painterResource(R.drawable.top),
-                contentDescription = "",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+    TextButton(
+        onClick = { viewModel.newGame() },
+        modifier = Modifier
+            .width(379.dp)
+            .height(133.dp),
+        shape = RectangleShape
+    ) {
+        Image(
+            painter = painterResource(R.drawable.top),
+            contentDescription = "",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 
@@ -253,7 +322,7 @@ private fun DrawScope.drawHeroes(
 ) {
     for (heroes in viewModel.board) {
         for (hero in heroes) {
-            when(hero.color) {
+            when (hero.color) {
                 1 -> drawHero(piece, hero, abbaddon)
                 2 -> drawHero(piece, hero, bane)
                 3 -> drawHero(piece, hero, cm)
@@ -270,7 +339,7 @@ private fun DrawScope.drawHeroes(
     }
 }
 
-private  fun DrawScope.drawHero(
+private fun DrawScope.drawHero(
     piece: ImageBitmap,
     hero: Hero,
     srcOffset: IntOffset
@@ -284,6 +353,6 @@ private  fun DrawScope.drawHero(
     )
 }
 
-private fun mToast(context: Context, msg: String){
+private fun mToast(context: Context, msg: String) {
     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 }

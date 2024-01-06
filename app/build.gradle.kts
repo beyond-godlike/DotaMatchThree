@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.dotamatchthree"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.dotamatchthree"
@@ -57,7 +57,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
@@ -69,8 +69,12 @@ dependencies {
 
     // hilt
     implementation ("com.google.dagger:hilt-android:2.43.2")
+    implementation("com.google.android.engage:engage-core:1.3.1")
     kapt ("com.google.dagger:hilt-compiler:2.43.2")
     implementation ("androidx.hilt:hilt-navigation-compose:1.0.0-rc01")
+
+    implementation("io.coil-kt:coil:2.5.0")
+    implementation("io.coil-kt:coil-compose:1.4.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

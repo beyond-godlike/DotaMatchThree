@@ -9,4 +9,6 @@ open class GameState : ViewState {
     object CHECKSWAPPING : GameState()
     object CRUSHING : GameState()
     object UPDATE : GameState()
+    object WIN : GameState()
+    object LOSE : GameState()
 }
