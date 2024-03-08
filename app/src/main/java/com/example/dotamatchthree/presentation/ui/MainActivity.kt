@@ -53,23 +53,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.dotamatchthree.data.Constants.abbaddon
-import com.example.dotamatchthree.data.Constants.bane
-import com.example.dotamatchthree.data.Constants.bat
-import com.example.dotamatchthree.data.Constants.brood
 import com.example.dotamatchthree.data.Constants.cellWidth
-import com.example.dotamatchthree.data.Constants.cm
-import com.example.dotamatchthree.data.Constants.dk
 import com.example.dotamatchthree.data.Constants.drawX
 import com.example.dotamatchthree.data.Constants.drawY
-import com.example.dotamatchthree.data.Constants.ds
-import com.example.dotamatchthree.data.Constants.ember
 import com.example.dotamatchthree.data.Constants.jsz
-import com.example.dotamatchthree.data.Constants.pa
 import com.example.dotamatchthree.data.Constants.screenHeight
 import com.example.dotamatchthree.data.Constants.screenWidth
-import com.example.dotamatchthree.data.Constants.viper
-import com.example.dotamatchthree.data.Constants.wk
 import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.R
 import com.example.dotamatchthree.data.Constants.heroMap
@@ -110,7 +99,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Grid(viewModel: MainViewModel) {
     val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
-    val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
+    val piece = ImageBitmap.imageResource(id = R.drawable.jq)
 
     val mContext = LocalContext.current
 
@@ -318,7 +307,7 @@ fun TopLabel(viewModel: MainViewModel) {
 
 @Composable
 private fun imageBitmap(type: Int): ImageBitmap {
-    val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
+    val piece = ImageBitmap.imageResource(id = R.drawable.jq)
     val hero = heroMap[type]!!
 
     val subBitmap = piece.asAndroidBitmap().let {
