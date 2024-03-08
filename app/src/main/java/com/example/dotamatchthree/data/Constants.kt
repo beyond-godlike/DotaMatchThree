@@ -23,4 +23,18 @@ object Constants {
     val ember = IntOffset(jsz *13, jsz)
     val brood = IntOffset(jsz *13, 0)
     val viper = IntOffset(jsz *6, jsz *6)
+
+    val heroMap = mapOf(
+        1 to abbaddon,
+        2 to bane,
+        3 to cm,
+        4 to ds,
+        5 to dk,
+        6 to bat,
+        7 to wk,
+        8 to pa,
+        9 to ember,
+        10 to brood,
+        11 to viper
+    )
 }

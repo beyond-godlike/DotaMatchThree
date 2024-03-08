@@ -72,6 +72,7 @@ import com.example.dotamatchthree.data.Constants.viper
 import com.example.dotamatchthree.data.Constants.wk
 import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.R
+import com.example.dotamatchthree.data.Constants.heroMap
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -312,39 +313,18 @@ fun TopLabel(viewModel: MainViewModel) {
                 .size(30.dp)
         )
         Text(text = "x " + goal.value.toString(), Modifier.padding(16.dp, 10.dp), fontSize = 16.sp)
-
-
-        // Score
     }
 }
 
 @Composable
 private fun imageBitmap(type: Int): ImageBitmap {
     val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
-    val hero = getHero(type = type)
+    val hero = heroMap[type]!!
 
     val subBitmap = piece.asAndroidBitmap().let {
         Bitmap.createBitmap(it, hero.x, hero.y, jsz, jsz)
     }.asImageBitmap()
     return subBitmap
-}
-
-@Composable
-fun getHero(type: Int): IntOffset {
-    return when (type) {
-        1 -> abbaddon
-        2 -> bane
-        3 -> cm
-        4 -> ds
-        5 -> dk
-        6 -> bat
-        7 -> wk
-        8 -> pa
-        9 -> ember
-        10 -> brood
-        11 -> viper
-        else -> abbaddon
-    }
 }
 
 @Composable
@@ -366,26 +346,13 @@ fun TopPic(viewModel: MainViewModel) {
     }
 }
 
-
 private fun DrawScope.drawHeroes(
     viewModel: MainViewModel,
     piece: ImageBitmap
 ) {
     for (heroes in viewModel.board) {
         for (hero in heroes) {
-            when (hero.color) {
-                1 -> drawHero(piece, hero, abbaddon)
-                2 -> drawHero(piece, hero, bane)
-                3 -> drawHero(piece, hero, cm)
-                4 -> drawHero(piece, hero, ds)
-                5 -> drawHero(piece, hero, dk)
-                6 -> drawHero(piece, hero, bat)
-                7 -> drawHero(piece, hero, wk)
-                8 -> drawHero(piece, hero, pa)
-                9 -> drawHero(piece, hero, ember)
-                10 -> drawHero(piece, hero, brood)
-                11 -> drawHero(piece, hero, viper)
-            }
+            heroMap[hero.color]?.let { drawHero(piece, hero, it) }
         }
     }
 }
