@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.rememberImagePainter
 import com.example.dotamatchthree.data.Constants.abbaddon
 import com.example.dotamatchthree.data.Constants.bane
 import com.example.dotamatchthree.data.Constants.bat
@@ -130,21 +129,31 @@ fun Grid(viewModel: MainViewModel) {
         is GameState.WIN -> {
             Column {
                 TopPic(viewModel)
-                Win()
+                Win(viewModel)
             }
         }
 
         is GameState.LOSE -> {
             Column {
                 TopPic(viewModel)
-                Lost()
+                Lost(viewModel)
+            }
+        }
+
+        is GameState.MESSAGE -> {
+            Column {
+                TopPic(viewModel)
+                Box(Modifier.fillMaxSize()) {
+                    Text(
+                        (viewModel.state.value as GameState.MESSAGE).message,
+                        Modifier.padding(50.dp)
+                    )
+                }
             }
         }
     }
     TopPic(viewModel)
     TopLabel(viewModel)
-
-    //Spacer(modifier = Modifier.padding(16.dp))
 
     Canvas(
         modifier = Modifier
@@ -255,31 +264,54 @@ fun Grid(viewModel: MainViewModel) {
 }
 
 @Composable
-fun Win() {
+fun Win(viewModel: MainViewModel) {
     Box(Modifier.fillMaxSize()) {
         Text("WON", Modifier.padding(50.dp))
+        TextButton(
+            modifier = Modifier.padding(100.dp),
+            onClick = {
+                viewModel.incLevel()
+                viewModel.newGame()
+            })
+        {
+            Text(text = "Go next", Modifier.padding(50.dp))
+        }
     }
 }
 
 @Composable
-fun Lost() {
+fun Lost(viewModel: MainViewModel) {
     Box(Modifier.fillMaxSize()) {
-        Text("LOST", Modifier.padding(50.dp))
+        Text("LOST", Modifier.padding(50.dp, 50.dp))
+        TextButton(
+            modifier = Modifier.padding(100.dp),
+            onClick = { viewModel.newGame() })
+        {
+            Text(text = "Try again", Modifier.padding(100.dp))
+        }
     }
 }
+
 @Composable
 fun TopLabel(viewModel: MainViewModel) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(24.dp, 0.dp)) {
-        val subBitmap = imageBitmap()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp, 0.dp)
+    ) {
+        val subBitmap = imageBitmap(viewModel.level!!.goalType)
         val moves = viewModel.moves.collectAsState()
         val goal = viewModel.goal.collectAsState()
 
-        Text(text = moves.value.toString(), Modifier.padding(0.dp, 10.dp), fontSize = 38.sp)
-        Spacer(modifier = Modifier.padding(98.dp, 0.dp))
-        Image(bitmap = subBitmap, contentDescription = "", Modifier.padding(0.dp, 8.dp).size(30.dp))
-        Text(text = "x " + goal.value.toString(), Modifier.padding(16.dp, 10.dp), fontSize = 20.sp)
+        Text(text = moves.value.toString(), Modifier.padding(0.dp, 10.dp), fontSize = 32.sp)
+        Spacer(modifier = Modifier.padding(90.dp, 0.dp))
+        Image(
+            bitmap = subBitmap, contentDescription = "",
+            Modifier
+                .padding(0.dp, 8.dp)
+                .size(30.dp)
+        )
+        Text(text = "x " + goal.value.toString(), Modifier.padding(16.dp, 10.dp), fontSize = 16.sp)
 
 
         // Score
@@ -287,13 +319,32 @@ fun TopLabel(viewModel: MainViewModel) {
 }
 
 @Composable
-private fun imageBitmap(): ImageBitmap {
+private fun imageBitmap(type: Int): ImageBitmap {
     val piece = ImageBitmap.imageResource(id = R.drawable.jewels)
+    val hero = getHero(type = type)
 
     val subBitmap = piece.asAndroidBitmap().let {
-        Bitmap.createBitmap(it, cm.x, cm.y, jsz, jsz)
+        Bitmap.createBitmap(it, hero.x, hero.y, jsz, jsz)
     }.asImageBitmap()
     return subBitmap
+}
+
+@Composable
+fun getHero(type: Int): IntOffset {
+    return when (type) {
+        1 -> abbaddon
+        2 -> bane
+        3 -> cm
+        4 -> ds
+        5 -> dk
+        6 -> bat
+        7 -> wk
+        8 -> pa
+        9 -> ember
+        10 -> brood
+        11 -> viper
+        else -> abbaddon
+    }
 }
 
 @Composable

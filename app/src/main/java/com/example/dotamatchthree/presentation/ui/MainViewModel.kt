@@ -1,21 +1,36 @@
 package com.example.dotamatchthree.presentation.ui
 
+import android.content.Context
 import android.graphics.Point
+import androidx.lifecycle.viewModelScope
 import com.example.dotamatchthree.data.Constants.cellWidth
 import com.example.dotamatchthree.data.Constants.drawX
 import com.example.dotamatchthree.data.Constants.drawY
 import com.example.dotamatchthree.data.Hero
+import com.example.dotamatchthree.data.Level
+import com.example.dotamatchthree.data.LevelDao
+import com.example.dotamatchthree.domain.PrefsHelper
 import com.example.dotamatchthree.presentation.ui.base.BaseViewModel
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.IOException
 import javax.inject.Inject
 
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
+class MainViewModel @Inject constructor(
+    private val context: Context,
+    private val db: LevelDao,
+    private val prefsHelper: PrefsHelper,
+) : BaseViewModel<GameState>(
     initialState = GameState.IDLE
 )  {
+
     var board: Array<Array<Hero>>  = Array(9) { row ->
         Array(9) { col ->
             Hero(row.toFloat(), col.toFloat(), 0)
@@ -39,25 +54,16 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
     private var swapIndex = 3
     private var dropStop = true
 
-    private var level = arrayOf(
-        intArrayOf(7, 8, 9, 10, 4, 3, 1, 2, 4),
-        intArrayOf(6, 1, 2, 4, 1, 3, 11, 11, 6),
-        intArrayOf(3, 3, 3, 5, 2, 3, 3, 1, 2),
-        intArrayOf(2, 1, 3, 3, 1, 5, 3, 3, 4),
-        intArrayOf(2, 2, 5, 1, 1, 2, 6, 11, 2),
-        intArrayOf(11, 3, 6, 1, 1, 3, 11, 2, 2),
-        intArrayOf(3, 6, 4, 2, 2, 4, 1, 3, 11),
-        intArrayOf(2, 1, 6, 3, 3, 6, 5, 3, 4),
-        intArrayOf(1, 6, 11, 2, 2, 3, 3, 5, 11)
-    )
+    var level: Level? = null
 
-    private var goalType = 3 // Int color
-
-    private val _moves = MutableStateFlow(8)
+    private val _moves = MutableStateFlow(10)
     val moves = _moves.asStateFlow()
 
-    private val _goal = MutableStateFlow(6)
+    private val _goal = MutableStateFlow(10)
     val goal = _goal.asStateFlow()
+
+    private val _goalType = MutableStateFlow(1)
+    val goalType = _goalType.asStateFlow()
 
     private fun setMoves(moves: Int) {
         _moves.value = moves
@@ -66,34 +72,70 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
         _goal.value = goal
     }
 
+    private fun setGoalType(goalType: Int) {
+        _goalType.value = goalType
+    }
+
     init {
+        // if first run set level to 1
+        prefsHelper.saveLevel(1)
+        createDb()
         newGame()
     }
 
+    // todo only when 1st time
+    private fun createDb() {
+        viewModelScope.launch {
+            try {
+                val jsonString: String = context.assets.open("lvls.json")
+                    .bufferedReader()
+                    .use { it.readText() }
+
+                val list = object : TypeToken<List<Level>>() {}.type
+                val lvls: List<Level> = Gson().fromJson(jsonString, list)
+
+                db.insertLevels(lvls)
+            }
+            catch(e: IOException) {
+                updateState(GameState.MESSAGE("cant read from json"))
+            }
+            catch (e: Exception) {
+                updateState(GameState.MESSAGE("not added"))
+        }
+        }
+    }
+
+    fun incLevel() {
+        prefsHelper.saveLevel(2)
+    }
+
+    private fun loadLevel() {
+        val currentLevel = prefsHelper.getLevel()
+        level = db.getLevel(currentLevel)
+    }
     fun newGame() {
-        setMoves(8)
-        setGoal(6)
+        updateState(GameState.IDLE)
+        loadLevel()
 
-        for (i in level.indices) {
-            for (j in level[0].indices) {
-                //load level from shared prefs
-                level[i][j] = generateNewJewels()
+        if(level != null) {
+
+            setMoves(level!!.moves)
+            setGoal(level!!.goal)
+            setGoalType(level!!.goalType)
+
+            for (i in  level!!.lvl.indices) {
+                for (j in  level!!.lvl.indices) {
+                    board[i][j] = Hero(
+                        drawX + cellWidth * j,
+                        drawY + cellWidth * i,
+                        level!!.lvl[i][j]
+                    )
+                }
             }
+
         }
 
-
-
-        for (i in level.indices) {
-            for (j in level[0].indices) {
-                board[i][j] = Hero(
-                    drawX + cellWidth * j,
-                    drawY + cellWidth * i,
-                    level[i][j]
-                )
-            }
-        }
-
-        updateState(GameState.UPDATE)
+        //updateState(GameState.UPDATE)
     }
 
     private fun generateNewJewels(): Int {
@@ -225,7 +267,7 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
                         for (m in j until k) {
                             search.add(ArrayList())
                             search[search.size - 1].add(Point(i, m))
-                            if(board[i][j].color == goalType)  setGoal(goal.value - 1)
+                            if(board[i][j].color == level!!.goalType)  setGoal(goal.value - 1)
                         }
                     }
                 }
@@ -249,7 +291,7 @@ class MainViewModel @Inject constructor() : BaseViewModel<GameState>(
                             search.add(ArrayList())
                             for (m in 0 until k) {
                                 search[search.size - 1].add(Point(i + m, j))
-                                if(board[i][j].color == goalType)  setGoal(goal.value - 1)
+                                if(board[i][j].color == level!!.goalType)  setGoal(goal.value - 1)
                             }
                             i += k - 1
                         }

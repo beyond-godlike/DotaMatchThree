@@ -11,4 +11,5 @@ open class GameState : ViewState {
     object UPDATE : GameState()
     object WIN : GameState()
     object LOSE : GameState()
+    data class MESSAGE(val message: String) : GameState()
 }

@@ -1,10 +1,8 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-android")
-    id ("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id ("dagger.hilt.android.plugin")
 }
 
@@ -46,7 +44,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
     packaging {
         resources {
@@ -68,13 +66,27 @@ dependencies {
     implementation("androidx.vectordrawable:vectordrawable:1.1.0")
 
     // hilt
-    implementation ("com.google.dagger:hilt-android:2.43.2")
-    implementation("com.google.android.engage:engage-core:1.3.1")
-    kapt ("com.google.dagger:hilt-compiler:2.43.2")
-    implementation ("androidx.hilt:hilt-navigation-compose:1.0.0-rc01")
+    val daggerVersion = "2.49"
+    // 2.48 "2.43.2"
+
+    implementation ("com.google.dagger:hilt-android:$daggerVersion")
+    implementation("com.google.android.engage:engage-core:1.4.0")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
+    ksp("com.google.dagger:hilt-android-compiler:$daggerVersion")
 
     implementation("io.coil-kt:coil:2.5.0")
     implementation("io.coil-kt:coil-compose:1.4.0")
+
+    // Room
+    val roomVersion = "2.6.0"
+
+    implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("androidx.room:room-runtime:$roomVersion")
+    //noinspection GradleDependency
+    ksp("androidx.room:room-compiler:$roomVersion")
+
+
+
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
