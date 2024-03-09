@@ -10,5 +10,7 @@ data class Level(
     val goal: Int = 0,
     val goalType: Int = 0,
     val moves: Int = 0,
-    val lvl: List<List<Int>>
+    val rangeFrom: Int = 0,
+    val rangeTo: Int = 0,
+    //val lvl: List<List<Int>>
 )

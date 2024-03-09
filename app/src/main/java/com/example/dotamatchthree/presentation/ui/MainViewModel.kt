@@ -17,7 +17,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import java.io.IOException
 import javax.inject.Inject
 
@@ -29,14 +28,14 @@ class MainViewModel @Inject constructor(
     private val prefsHelper: PrefsHelper,
 ) : BaseViewModel<GameState>(
     initialState = GameState.IDLE
-)  {
+) {
 
-    var board: Array<Array<Hero>>  = Array(9) { row ->
+    var board: Array<Array<Hero>> = Array(9) { row ->
         Array(9) { col ->
             Hero(row.toFloat(), col.toFloat(), 0)
         }
     }
-    private var topBoard: Array<Hero> =  Array(9) { row ->
+    private var topBoard: Array<Hero> = Array(9) { row ->
         Hero(0.0f, row.toFloat(), 0)
     }
     private val search: ArrayList<ArrayList<Point>> = ArrayList()
@@ -55,6 +54,17 @@ class MainViewModel @Inject constructor(
     private var dropStop = true
 
     var level: Level? = null
+    var grid = arrayOf(
+        intArrayOf(7, 8, 9, 10, 4, 3, 1, 2, 4),
+        intArrayOf(6, 1, 2, 4, 1, 3, 11, 11, 6),
+        intArrayOf(3, 4, 2, 5, 2, 3, 3, 1, 2),
+        intArrayOf(2, 1, 3, 3, 1, 5, 4, 5, 4),
+        intArrayOf(2, 2, 5, 1, 1, 2, 6, 11, 2),
+        intArrayOf(11, 3, 6, 1, 1, 3, 11, 2, 2),
+        intArrayOf(3, 6, 4, 2, 2, 4, 1, 11, 11),
+        intArrayOf(2, 1, 6, 3, 3, 6, 5, 3, 4),
+        intArrayOf(1, 6, 11, 2, 2, 3, 3, 5, 11)
+    )
 
     private val _moves = MutableStateFlow(10)
     val moves = _moves.asStateFlow()
@@ -68,6 +78,7 @@ class MainViewModel @Inject constructor(
     private fun setMoves(moves: Int) {
         _moves.value = moves
     }
+
     private fun setGoal(goal: Int) {
         _goal.value = goal
     }
@@ -95,52 +106,60 @@ class MainViewModel @Inject constructor(
                 val lvls: List<Level> = Gson().fromJson(jsonString, list)
 
                 db.insertLevels(lvls)
-            }
-            catch(e: IOException) {
+            } catch (e: IOException) {
                 updateState(GameState.MESSAGE("cant read from json"))
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 updateState(GameState.MESSAGE("not added"))
-        }
+            }
         }
     }
 
     fun incLevel() {
-        prefsHelper.saveLevel(2)
+        val l = prefsHelper.getLevel() + 1
+        prefsHelper.saveLevel(l)
     }
 
     private fun loadLevel() {
         val currentLevel = prefsHelper.getLevel()
         level = db.getLevel(currentLevel)
     }
+
     fun newGame() {
         updateState(GameState.IDLE)
         loadLevel()
 
-        if(level != null) {
+        if (level != null) {
+
+            // create grid
+            for (i in grid.indices) {
+                for (j in grid[0].indices) {
+                    //load level from shared prefs
+                    grid[i][j] = generateNewJewels()
+                }
+            }
+
 
             setMoves(level!!.moves)
             setGoal(level!!.goal)
             setGoalType(level!!.goalType)
 
-            for (i in  level!!.lvl.indices) {
-                for (j in  level!!.lvl.indices) {
+            for (i in grid.indices) {
+                for (j in grid.indices) {
                     board[i][j] = Hero(
                         drawX + cellWidth * j,
                         drawY + cellWidth * i,
-                        level!!.lvl[i][j]
+                        grid[i][j]
                     )
                 }
             }
 
         }
 
-        //updateState(GameState.UPDATE)
+        updateState(GameState.UPDATE)
     }
 
     private fun generateNewJewels(): Int {
-        //return (Math.random() * 11 + 1).toInt()
-        return (Math.random() * 8 + 1).toInt()
+        return (level!!.rangeFrom until level!!.rangeTo).random()
     }
 
 
@@ -149,6 +168,7 @@ class MainViewModel @Inject constructor(
             GameState.SWAPPING -> {
                 swap()
             }
+
             GameState.CHECKSWAPPING -> {
                 fillCrushing()
                 if (search.isEmpty()) {
@@ -190,14 +210,16 @@ class MainViewModel @Inject constructor(
                 }
                 dropStop = false
             }
-            GameState.IDLE ->{}
+
+            GameState.IDLE -> {}
         }
     }
+
     private fun checkWin() {
-        if(moves.value <= 0) {
-            if(goal.value > 0) updateState(GameState.LOSE)
+        if (moves.value <= 0) {
+            if (goal.value > 0) updateState(GameState.LOSE)
         }
-        if(goal.value <= 0)  updateState(GameState.WIN)
+        if (goal.value <= 0) updateState(GameState.WIN)
 
     }
 
@@ -235,10 +257,10 @@ class MainViewModel @Inject constructor(
             board[newPosI][newPosJ].posX = ((newPosJ * cellWidth + drawX))
             board[newPosI][newPosJ].posY = ((newPosI * cellWidth + drawY))
             swapIndex = 8
-            if(state.value == GameState.SWAPPING) {
+            if (state.value == GameState.SWAPPING) {
                 updateState(GameState.CHECKSWAPPING)
                 // if swapped
-                if(swapped) {
+                if (swapped) {
                     setMoves(moves.value - 1)
                     swapped = false
                 }
@@ -267,7 +289,7 @@ class MainViewModel @Inject constructor(
                         for (m in j until k) {
                             search.add(ArrayList())
                             search[search.size - 1].add(Point(i, m))
-                            if(board[i][j].color == level!!.goalType)  setGoal(goal.value - 1)
+                            if (board[i][j].color == level!!.goalType) setGoal(goal.value - 1)
                         }
                     }
                 }
@@ -291,7 +313,7 @@ class MainViewModel @Inject constructor(
                             search.add(ArrayList())
                             for (m in 0 until k) {
                                 search[search.size - 1].add(Point(i + m, j))
-                                if(board[i][j].color == level!!.goalType)  setGoal(goal.value - 1)
+                                if (board[i][j].color == level!!.goalType) setGoal(goal.value - 1)
                             }
                             i += k - 1
                         }
@@ -315,7 +337,7 @@ class MainViewModel @Inject constructor(
 
     private fun allowCrushing(points: ArrayList<Point>): Boolean {
         var allow = true
-        for (i in 0 until  points.size) {
+        for (i in 0 until points.size) {
             if (points[i].x < board.size - 1) {
                 if (board[points[i].x + 1][points[i].y].color == 0) allow = false
             }
