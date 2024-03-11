@@ -54,17 +54,7 @@ class MainViewModel @Inject constructor(
     private var dropStop = true
 
     var level: Level? = null
-    var grid = arrayOf(
-        intArrayOf(7, 8, 9, 10, 4, 3, 1, 2, 4),
-        intArrayOf(6, 1, 2, 4, 1, 3, 11, 11, 6),
-        intArrayOf(3, 4, 2, 5, 2, 3, 3, 1, 2),
-        intArrayOf(2, 1, 3, 3, 1, 5, 4, 5, 4),
-        intArrayOf(2, 2, 5, 1, 1, 2, 6, 11, 2),
-        intArrayOf(11, 3, 6, 1, 1, 3, 11, 2, 2),
-        intArrayOf(3, 6, 4, 2, 2, 4, 1, 11, 11),
-        intArrayOf(2, 1, 6, 3, 3, 6, 5, 3, 4),
-        intArrayOf(1, 6, 11, 2, 2, 3, 3, 5, 11)
-    )
+    val grid = Array(9) { IntArray(9) { 0 } }
 
     private val _moves = MutableStateFlow(10)
     val moves = _moves.asStateFlow()
@@ -381,6 +371,7 @@ class MainViewModel @Inject constructor(
                     topBoard[k].posY = board[0][k].posY - cellWidth
                     topBoard[k].posX = drawX.toInt() + k * cellWidth
                     dropStop = true
+                    break
                 }
             }
         }
