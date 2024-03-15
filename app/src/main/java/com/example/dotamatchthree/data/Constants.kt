@@ -13,6 +13,8 @@ object Constants {
     //val jsz = 32
     val jsz = 184
 
+    val jsonPath = "lvls.json"
+
     val slark = IntOffset(0 , 0)
     val mirana = IntOffset(0, jsz)
     val venge = IntOffset(jsz *2, jsz)

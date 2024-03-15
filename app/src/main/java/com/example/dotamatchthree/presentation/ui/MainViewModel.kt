@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.dotamatchthree.data.Constants.cellWidth
 import com.example.dotamatchthree.data.Constants.drawX
 import com.example.dotamatchthree.data.Constants.drawY
+import com.example.dotamatchthree.data.Constants.jsonPath
 import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.data.Level
 import com.example.dotamatchthree.data.LevelDao
@@ -17,7 +18,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
 import javax.inject.Inject
 
 
@@ -35,7 +35,7 @@ class MainViewModel @Inject constructor(
             Hero(row.toFloat(), col.toFloat(), 0)
         }
     }
-    private var topBoard: Array<Hero> = Array(9) { row ->
+    var topBoard: Array<Hero> = Array(9) { row ->
         Hero(0.0f, row.toFloat(), 0)
     }
     private val search: ArrayList<ArrayList<Point>> = ArrayList()
@@ -65,11 +65,11 @@ class MainViewModel @Inject constructor(
     private val _goalType = MutableStateFlow(1)
     val goalType = _goalType.asStateFlow()
 
-    private fun setMoves(moves: Int) {
+    fun setMoves(moves: Int) {
         _moves.value = moves
     }
 
-    private fun setGoal(goal: Int) {
+    fun setGoal(goal: Int) {
         _goal.value = goal
     }
 
@@ -88,22 +88,21 @@ class MainViewModel @Inject constructor(
     private fun createDb() {
         viewModelScope.launch {
             try {
-                val jsonString: String = context.assets.open("lvls.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-
                 val list = object : TypeToken<List<Level>>() {}.type
-                val lvls: List<Level> = Gson().fromJson(jsonString, list)
+                val lvls: List<Level> = Gson().fromJson(jsonString(jsonPath), list)
 
                 db.insertLevels(lvls)
-            } catch (e: IOException) {
-                updateState(GameState.MESSAGE("cant read from json"))
             } catch (e: Exception) {
                 updateState(GameState.MESSAGE("not added"))
             }
         }
     }
 
+    private fun jsonString(path: String): String {
+        return context.assets.open(path)
+            .bufferedReader()
+            .use { it.readText() }
+    }
     fun incLevel() {
         val l = prefsHelper.getLevel() + 1
         prefsHelper.saveLevel(l)
@@ -123,7 +122,6 @@ class MainViewModel @Inject constructor(
             // create grid
             for (i in grid.indices) {
                 for (j in grid[0].indices) {
-                    //load level from shared prefs
                     grid[i][j] = generateNewJewels()
                 }
             }
@@ -205,7 +203,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun checkWin() {
+    fun checkWin() {
         if (moves.value <= 0) {
             if (goal.value > 0) updateState(GameState.LOSE)
         }
@@ -335,7 +333,7 @@ class MainViewModel @Inject constructor(
         return allow
     }
 
-    private fun checkDrop(): Boolean {
+    fun checkDrop(): Boolean {
         var drop = false
         for (jewels in board) {
             for (j in jewels) {
@@ -361,7 +359,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun drop() {
+    fun drop() {
         for (k in topBoard.indices) {
             if (board[0][k].color == 0) {
                 topBoard[k].posY += cellWidth / 8

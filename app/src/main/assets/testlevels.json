@@ -1,0 +1,26 @@
+[
+  {
+    "level": 1,
+    "goal": 6,
+    "goalType": 3,
+    "moves": 12,
+    "rangeFrom": 1,
+    "rangeTo": 10
+  },
+  {
+    "level": 2,
+    "goal": 4,
+    "goalType": 7,
+    "moves": 20,
+    "rangeFrom": 1,
+    "rangeTo": 9
+  },
+  {
+    "level": 3,
+    "goal": 8,
+    "goalType": 5,
+    "moves": 10,
+    "rangeFrom": 3,
+    "rangeTo": 11
+  }
+]

@@ -10,6 +10,14 @@ android {
     namespace = "com.example.dotamatchthree"
     compileSdk = 34
 
+    testOptions {
+        unitTests {
+            all {
+                it.enabled = true
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.dotamatchthree"
         minSdk = 21
@@ -64,6 +72,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.vectordrawable:vectordrawable:1.1.0")
+    implementation("androidx.test:monitor:1.6.1")
 
     // hilt
     val daggerVersion = "2.49"
@@ -89,6 +98,10 @@ dependencies {
 
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation ("org.mockito:mockito-core:5.3.0")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.9")
+
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.03.00"))
