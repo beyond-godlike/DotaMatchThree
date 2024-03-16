@@ -1,7 +1,7 @@
 package com.example.dotamatchthree.presentation.ui
 
 import android.content.Context
-import com.example.dotamatchthree.data.LevelDao
+import com.example.dotamatchthree.data.api.dao.LevelDao
 import com.example.dotamatchthree.domain.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -9,7 +9,7 @@ import com.example.dotamatchthree.data.Constants.drawY
 import com.example.dotamatchthree.data.Constants.jsonPath
 import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.data.Level
-import com.example.dotamatchthree.data.LevelDao
+import com.example.dotamatchthree.data.api.dao.LevelDao
 import com.example.dotamatchthree.domain.PrefsHelper
 import com.example.dotamatchthree.presentation.ui.base.BaseViewModel
 import com.google.gson.Gson
