@@ -24,6 +24,7 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -56,7 +57,7 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/*"
         }
     }
 }
@@ -73,15 +74,21 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.vectordrawable:vectordrawable:1.1.0")
     implementation("androidx.test:monitor:1.6.1")
+    implementation("androidx.test:core-ktx:1.5.0")
 
     // hilt
     val daggerVersion = "2.49"
-    // 2.48 "2.43.2"
+
+    val mockkVersion = "1.13.10"
+    val mockitoVersion = "5.3.0"
+    val multidex_version = "2.0.1"
 
     implementation ("com.google.dagger:hilt-android:$daggerVersion")
     implementation("com.google.android.engage:engage-core:1.4.0")
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
     ksp("com.google.dagger:hilt-android-compiler:$daggerVersion")
+
+    implementation ("androidx.multidex:multidex:$multidex_version")
 
     implementation("io.coil-kt:coil:2.5.0")
     implementation("io.coil-kt:coil-compose:1.4.0")
@@ -99,10 +106,13 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation ("org.mockito:mockito-core:5.3.0")
+    testImplementation ("org.mockito:mockito-core:${mockitoVersion}")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.9")
+    testImplementation("io.mockk:mockk:${mockkVersion}")
 
-    androidTestImplementation ("org.mockito:mockito-android:5.3.0")
+    androidTestImplementation ("org.mockito:mockito-android:${mockitoVersion}")
+    androidTestImplementation ("io.mockk:mockk-android:${mockkVersion}")
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

@@ -1,21 +1,23 @@
 package com.example.dotamatchthree.data.api.dao
 
 import com.example.dotamatchthree.data.Level
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
+import io.mockk.verify
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mockito
-import org.mockito.junit.MockitoJUnitRunner
 
 
-@RunWith(MockitoJUnitRunner::class)
 class LevelDaoTest {
 
     private lateinit var dao: LevelDao
 
     @Before
     fun setup() {
-        dao = Mockito.mock(LevelDao::class.java)
+        dao = mockk()
     }
 
     @Test
@@ -25,9 +27,11 @@ class LevelDaoTest {
             Level(2, 6, 4, 12)
         )
 
+        every { dao.insertLevels(levels) } just runs
+
         dao.insertLevels(levels)
 
-        Mockito.verify(dao).insertLevels(levels)
+        verify { dao.insertLevels(levels) }
     }
 
     @Test
@@ -37,22 +41,22 @@ class LevelDaoTest {
             Level(2, 6, 4, 12)
         )
 
-        Mockito.`when`(dao.getLevels()).thenReturn(levels)
+        every { dao.getLevels() } returns levels
 
-        val retrievedLevels = dao.getLevels()
+        val result = dao.getLevels()
 
-        assert(retrievedLevels.size == levels.size)
-        assert(retrievedLevels.containsAll(levels))
+        assertEquals(levels, result)
+
     }
 
     @Test
     fun testGetLevel() {
         val level = Level(1, 6, 2, 10)
 
-        Mockito.`when`(dao.getLevel(1)).thenReturn(level)
+        every { dao.getLevel(1) } returns level
 
-        val retrievedLevel = dao.getLevel(1)
+        val result = dao.getLevel(1)
 
-        assert(retrievedLevel == level)
+        assertEquals(level, result)
     }
 }

@@ -1,4 +1,4 @@
-package com.example.dotamatchthree.data.api
+package com.example.dotamatchthree.data.di
 
 import android.app.Application
 import android.content.Context
