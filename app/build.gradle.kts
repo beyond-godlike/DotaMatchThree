@@ -16,6 +16,7 @@ android {
                 it.enabled = true
             }
         }
+        unitTests.isReturnDefaultValues = true
     }
 
     defaultConfig {
@@ -109,6 +110,9 @@ dependencies {
     testImplementation ("org.mockito:mockito-core:${mockitoVersion}")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.9")
     testImplementation("io.mockk:mockk:${mockkVersion}")
+
+    androidTestImplementation ("com.google.dagger:hilt-android-testing:${daggerVersion}")
+    kspAndroidTest("com.google.dagger:hilt-android-comiler:${daggerVersion}")
 
     androidTestImplementation ("org.mockito:mockito-android:${mockitoVersion}")
     androidTestImplementation ("io.mockk:mockk-android:${mockkVersion}")

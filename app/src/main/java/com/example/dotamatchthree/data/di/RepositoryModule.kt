@@ -6,6 +6,7 @@ import androidx.room.Room
 import com.example.dotamatchthree.data.AppDatabase
 import com.example.dotamatchthree.domain.AppPrefs
 import com.example.dotamatchthree.domain.PrefsHelper
+import com.example.dotamatchthree.presentation.ui.game.Game
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,4 +41,10 @@ class RepositoryModule {
     @Provides
     @Singleton
     fun provideLevelsDao(db: AppDatabase) = db.levelsDao()
+
+    @Provides
+    @Singleton
+    fun provideGame() : Game {
+        return Game()
+    }
 }

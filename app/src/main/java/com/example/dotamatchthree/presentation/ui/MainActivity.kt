@@ -53,15 +53,18 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.dotamatchthree.R
 import com.example.dotamatchthree.data.Constants.cellWidth
 import com.example.dotamatchthree.data.Constants.drawX
 import com.example.dotamatchthree.data.Constants.drawY
+import com.example.dotamatchthree.data.Constants.heroMap
 import com.example.dotamatchthree.data.Constants.jsz
 import com.example.dotamatchthree.data.Constants.screenHeight
 import com.example.dotamatchthree.data.Constants.screenWidth
 import com.example.dotamatchthree.data.Hero
-import com.example.dotamatchthree.R
-import com.example.dotamatchthree.data.Constants.heroMap
+import com.example.dotamatchthree.presentation.ui.game.Game
+import com.example.dotamatchthree.presentation.ui.game.GameState
+import com.example.dotamatchthree.presentation.ui.game.GameViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -89,7 +92,7 @@ class MainActivity : ComponentActivity() {
                     .width(screenWidth.dp)
                     .height(screenHeight.dp)
             ) {
-                val viewModel: MainViewModel = hiltViewModel()
+                val viewModel: GameViewModel = hiltViewModel()
                 Grid(viewModel)
             }
         }
@@ -97,7 +100,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Grid(viewModel: MainViewModel) {
+fun Grid(viewModel: GameViewModel) {
     val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
     val piece = ImageBitmap.imageResource(id = R.drawable.jq)
 
@@ -142,8 +145,9 @@ fun Grid(viewModel: MainViewModel) {
             }
         }
     }
+    val game = viewModel.game
     TopPic(viewModel)
-    TopLabel(viewModel)
+    TopLabel(game)
 
     Canvas(
         modifier = Modifier
@@ -152,41 +156,41 @@ fun Grid(viewModel: MainViewModel) {
             .pointerInteropFilter {
                 when (it.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        viewModel.oldX = it.x
-                        viewModel.oldY = it.y
-                        viewModel.posI = ((viewModel.oldY - drawY) / cellWidth).toInt()
-                        viewModel.posJ = ((viewModel.oldX - drawX) / cellWidth).toInt()
-                        viewModel.move = true
+                        game.oldX = it.x
+                        game.oldY = it.y
+                        game.posI = ((game.oldY - drawY) / cellWidth).toInt()
+                        game.posJ = ((game.oldX - drawX) / cellWidth).toInt()
+                        game.move = true
                     }
 
                     MotionEvent.ACTION_MOVE -> {
                         if (viewModel.state.value == GameState.IDLE) {
                             val newX = it.x
                             val newY = it.y
-                            val deltaX = abs(newX - viewModel.oldX)
-                            val deltaY = abs(newY - viewModel.oldY)
+                            val deltaX = abs(newX - game.oldX)
+                            val deltaY = abs(newY - game.oldY)
 
-                            if (viewModel.move && (deltaX > 30 || deltaY > 30)) {
-                                viewModel.move = false
-                                if (abs(viewModel.oldX - newX) > abs(viewModel.oldY - newY)) {
-                                    if (newX > viewModel.oldX) {
-                                        viewModel.direction = "right"
-                                        viewModel.newPosJ = viewModel.posJ + 1
+                            if (game.move && (deltaX > 30 || deltaY > 30)) {
+                                game.move = false
+                                if (abs(game.oldX - newX) > abs(game.oldY - newY)) {
+                                    if (newX > game.oldX) {
+                                        game.direction = "right"
+                                        game.newPosJ = game.posJ + 1
                                     } else {
-                                        viewModel.direction = "left"
-                                        viewModel.newPosJ = viewModel.posJ - 1
+                                        game.direction = "left"
+                                        game.newPosJ = game.posJ - 1
                                     }
-                                    viewModel.newPosI = viewModel.posI
+                                    game.newPosI = game.posI
                                 }
-                                if (abs(viewModel.oldY - newY) > abs(viewModel.oldX - newX)) {
-                                    if (newY > viewModel.oldY) {
-                                        viewModel.direction = "down"
-                                        viewModel.newPosI = viewModel.posI + 1
+                                if (abs(game.oldY - newY) > abs(game.oldX - newX)) {
+                                    if (newY > game.oldY) {
+                                        game.direction = "down"
+                                        game.newPosI = game.posI + 1
                                     } else {
-                                        viewModel.direction = "up"
-                                        viewModel.newPosI = viewModel.posI - 1
+                                        game.direction = "up"
+                                        game.newPosI = game.posI - 1
                                     }
-                                    viewModel.newPosJ = viewModel.posJ
+                                    game.newPosJ = game.posJ
                                 }
                                 // pass human
                                 viewModel.updateState(GameState.SWAPPING)
@@ -215,7 +219,7 @@ fun Grid(viewModel: MainViewModel) {
             }
 
             sec.let { _ ->
-                drawHeroes(viewModel, piece)
+                drawHeroes(game, piece)
             }
             when (viewModel.state.value) {
                 is GameState.IDLE -> {
@@ -254,7 +258,7 @@ fun Grid(viewModel: MainViewModel) {
 }
 
 @Composable
-fun Win(viewModel: MainViewModel) {
+fun Win(viewModel: GameViewModel) {
     Box(Modifier.fillMaxSize()) {
         Text("WON", Modifier.padding(50.dp))
         TextButton(
@@ -270,7 +274,7 @@ fun Win(viewModel: MainViewModel) {
 }
 
 @Composable
-fun Lost(viewModel: MainViewModel) {
+fun Lost(viewModel: GameViewModel) {
     Box(Modifier.fillMaxSize()) {
         Text("LOST", Modifier.padding(50.dp, 50.dp))
         TextButton(
@@ -283,15 +287,15 @@ fun Lost(viewModel: MainViewModel) {
 }
 
 @Composable
-fun TopLabel(viewModel: MainViewModel) {
+fun TopLabel(game: Game) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp, 0.dp)
     ) {
-        val subBitmap = imageBitmap(viewModel.level!!.goalType)
-        val moves = viewModel.moves.collectAsState()
-        val goal = viewModel.goal.collectAsState()
+        val subBitmap = imageBitmap(game.level.goalType)
+        val moves = game.moves.collectAsState()
+        val goal = game.goal.collectAsState()
 
         Text(text = moves.value.toString(), Modifier.padding(0.dp, 10.dp), fontSize = 32.sp)
         Spacer(modifier = Modifier.padding(90.dp, 0.dp))
@@ -317,7 +321,7 @@ private fun imageBitmap(type: Int): ImageBitmap {
 }
 
 @Composable
-fun TopPic(viewModel: MainViewModel) {
+fun TopPic(viewModel: GameViewModel) {
 
     TextButton(
         onClick = { viewModel.newGame() },
@@ -336,10 +340,10 @@ fun TopPic(viewModel: MainViewModel) {
 }
 
 private fun DrawScope.drawHeroes(
-    viewModel: MainViewModel,
+    game: Game,
     piece: ImageBitmap
 ) {
-    for (heroes in viewModel.board) {
+    for (heroes in game.board) {
         for (hero in heroes) {
             heroMap[hero.color]?.let { drawHero(piece, hero, it) }
         }

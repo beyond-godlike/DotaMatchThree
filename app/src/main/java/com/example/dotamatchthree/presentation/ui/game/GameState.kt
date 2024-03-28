@@ -1,4 +1,4 @@
-package com.example.dotamatchthree.presentation.ui
+package com.example.dotamatchthree.presentation.ui.game
 
 import com.example.dotamatchthree.presentation.ui.base.ViewState
 
