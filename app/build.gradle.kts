@@ -6,6 +6,18 @@ plugins {
     id ("dagger.hilt.android.plugin")
 }
 
+
+kotlin {
+    sourceSets {
+        debug {
+            kotlin.srcDir("build/generated/ksp/debug/kotlin")
+        }
+        release {
+            kotlin.srcDir("build/generated/ksp/release/kotlin")
+        }
+    }
+}
+
 android {
     namespace = "com.example.dotamatchthree"
     compileSdk = 34
@@ -17,6 +29,7 @@ android {
             }
         }
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 
     defaultConfig {
@@ -54,7 +67,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = "1.5.2"
     }
     packaging {
         resources {
@@ -78,7 +91,7 @@ dependencies {
     implementation("androidx.test:core-ktx:1.5.0")
 
     // hilt
-    val daggerVersion = "2.49"
+    val daggerVersion = "2.48"
 
     val mockkVersion = "1.13.10"
     val mockitoVersion = "5.3.0"
@@ -110,6 +123,7 @@ dependencies {
     testImplementation ("org.mockito:mockito-core:${mockitoVersion}")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.9")
     testImplementation("io.mockk:mockk:${mockkVersion}")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 
     androidTestImplementation ("com.google.dagger:hilt-android-testing:${daggerVersion}")
     kspAndroidTest("com.google.dagger:hilt-android-comiler:${daggerVersion}")

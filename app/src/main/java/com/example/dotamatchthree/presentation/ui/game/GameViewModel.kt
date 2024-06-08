@@ -7,6 +7,7 @@ import com.example.dotamatchthree.data.Level
 import com.example.dotamatchthree.data.api.dao.LevelDao
 import com.example.dotamatchthree.domain.PrefsHelper
 import com.example.dotamatchthree.presentation.ui.base.BaseViewModel
+import com.example.dotamatchthree.presentation.ui.base.ViewEvent
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +20,7 @@ class GameViewModel @Inject constructor(
     val db: LevelDao,
     val prefsHelper: PrefsHelper,
     val game: Game
-) : BaseViewModel<GameState>(
+) : BaseViewModel<GameState, ViewEvent>(
     initialState = GameState.IDLE
 ) {
     init {
@@ -30,7 +31,7 @@ class GameViewModel @Inject constructor(
         game.init(loadLevel())
     }
 
-    fun newGame() {
+    private fun newGame() {
         updateState(GameState.IDLE)
 
         game.init(loadLevel())
@@ -39,7 +40,20 @@ class GameViewModel @Inject constructor(
 
     }
 
-    fun updateGame() {
+    fun dispatchEvent(event: Event) {
+        when (event) {
+            is Event.NewGame -> newGame()
+            is Event.Update -> updateGame()
+            is Event.Win -> {
+                incLevel()
+                newGame()
+            }
+            is Event.Lost -> { newGame() }
+            is Event.UpdateState -> updateState(event.state)
+        }
+    }
+
+    private fun updateGame() {
         when (state.value) {
             GameState.SWAPPING -> {
                 game.swap()
@@ -139,3 +153,13 @@ class GameViewModel @Inject constructor(
             }
         }
     }
+
+sealed class Event : ViewEvent {
+    //data class NewGame(val level: Int) : Event()
+    object NewGame : Event()
+    object Win : Event()
+    object Lost : Event()
+    object Update : Event()
+    data class UpdateState(val state: GameState) : Event()
+
+}

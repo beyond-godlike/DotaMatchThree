@@ -62,6 +62,7 @@ import com.example.dotamatchthree.data.Constants.jsz
 import com.example.dotamatchthree.data.Constants.screenHeight
 import com.example.dotamatchthree.data.Constants.screenWidth
 import com.example.dotamatchthree.data.Hero
+import com.example.dotamatchthree.presentation.ui.game.Event
 import com.example.dotamatchthree.presentation.ui.game.Game
 import com.example.dotamatchthree.presentation.ui.game.GameState
 import com.example.dotamatchthree.presentation.ui.game.GameViewModel
@@ -73,7 +74,6 @@ import kotlin.math.abs
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             val context = LocalContext.current
             val displayMetrics = context.resources.displayMetrics
@@ -93,60 +93,38 @@ class MainActivity : ComponentActivity() {
                     .height(screenHeight.dp)
             ) {
                 val viewModel: GameViewModel = hiltViewModel()
-                Grid(viewModel)
+                Grid(
+                    state = viewModel.state.value,
+                    game = viewModel.game,
+                    onEvent = { event -> viewModel.dispatchEvent(event) }
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun Grid(viewModel: GameViewModel) {
+fun Grid(
+    state: GameState,
+    game: Game,
+    onEvent: (Event) -> Unit,
+) {
     val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
     val piece = ImageBitmap.imageResource(id = R.drawable.jq)
 
-    val mContext = LocalContext.current
-
-
-    var sec by remember {
-        mutableStateOf(0)
+    var elapsedMillis by remember {
+        mutableStateOf(0L)
     }
 
-    LaunchedEffect(key1 = Unit, block = {
+    LaunchedEffect(key1 = Unit) {
         while (true) {
             delay(30)
-            sec += 30
-        }
-    })
-
-    when (viewModel.state.value) {
-        is GameState.WIN -> {
-            Column {
-                TopPic(viewModel)
-                Win(viewModel)
-            }
-        }
-
-        is GameState.LOSE -> {
-            Column {
-                TopPic(viewModel)
-                Lost(viewModel)
-            }
-        }
-
-        is GameState.MESSAGE -> {
-            Column {
-                TopPic(viewModel)
-                Box(Modifier.fillMaxSize()) {
-                    Text(
-                        (viewModel.state.value as GameState.MESSAGE).message,
-                        Modifier.padding(50.dp)
-                    )
-                }
-            }
+            elapsedMillis += 30
         }
     }
-    val game = viewModel.game
-    TopPic(viewModel)
+
+    GameStateScreen(state, onEvent)
     TopLabel(game)
 
     Canvas(
@@ -156,15 +134,17 @@ fun Grid(viewModel: GameViewModel) {
             .pointerInteropFilter {
                 when (it.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        game.oldX = it.x
-                        game.oldY = it.y
-                        game.posI = ((game.oldY - drawY) / cellWidth).toInt()
-                        game.posJ = ((game.oldX - drawX) / cellWidth).toInt()
-                        game.move = true
+                        with(game) {
+                            oldX = it.x
+                            oldY = it.y
+                            posI = ((oldY - drawY) / cellWidth).toInt()
+                            posJ = ((oldX - drawX) / cellWidth).toInt()
+                            move = true
+                        }
                     }
 
                     MotionEvent.ACTION_MOVE -> {
-                        if (viewModel.state.value == GameState.IDLE) {
+                        if (state == GameState.IDLE) {
                             val newX = it.x
                             val newY = it.y
                             val deltaX = abs(newX - game.oldX)
@@ -172,28 +152,35 @@ fun Grid(viewModel: GameViewModel) {
 
                             if (game.move && (deltaX > 30 || deltaY > 30)) {
                                 game.move = false
-                                if (abs(game.oldX - newX) > abs(game.oldY - newY)) {
-                                    if (newX > game.oldX) {
-                                        game.direction = "right"
+                                game.direction = when {
+                                    deltaX > deltaY -> if (newX > game.oldX) "right" else "left"
+                                    else -> if (newY > game.oldY) "down" else "up"
+                                }
+
+                                // Calculate new position based on direction
+                                when (game.direction) {
+                                    "right" -> {
                                         game.newPosJ = game.posJ + 1
-                                    } else {
-                                        game.direction = "left"
+                                        game.newPosI = game.posI
+                                    }
+
+                                    "left" -> {
                                         game.newPosJ = game.posJ - 1
+                                        game.newPosI = game.posI
                                     }
-                                    game.newPosI = game.posI
-                                }
-                                if (abs(game.oldY - newY) > abs(game.oldX - newX)) {
-                                    if (newY > game.oldY) {
-                                        game.direction = "down"
+
+                                    "down" -> {
                                         game.newPosI = game.posI + 1
-                                    } else {
-                                        game.direction = "up"
-                                        game.newPosI = game.posI - 1
+                                        game.newPosJ = game.posJ
                                     }
-                                    game.newPosJ = game.posJ
+
+                                    "up" -> {
+                                        game.newPosI = game.posI - 1
+                                        game.newPosJ = game.posJ
+                                    }
                                 }
-                                // pass human
-                                viewModel.updateState(GameState.SWAPPING)
+
+                                onEvent.invoke(Event.UpdateState(GameState.SWAPPING))
                             }
                         }
                     }
@@ -218,27 +205,18 @@ fun Grid(viewModel: GameViewModel) {
                 }
             }
 
-            sec.let { _ ->
-                drawHeroes(game, piece)
-            }
-            when (viewModel.state.value) {
+            drawHeroes(game, piece, elapsedMillis)
+
+            when (state) {
                 is GameState.IDLE -> {
+
                 }
 
-                is GameState.UPDATE -> {
-                    viewModel.updateGame()
-                }
-
-                is GameState.CHECKSWAPPING -> {
-                    viewModel.updateGame()
-                }
-
-                is GameState.SWAPPING -> {
-                    viewModel.updateGame()
-                }
-
+                is GameState.UPDATE,
+                is GameState.CHECKSWAPPING,
+                is GameState.SWAPPING,
                 is GameState.CRUSHING -> {
-                    viewModel.updateGame()
+                    onEvent.invoke(Event.Update)
                 }
             }
 
@@ -258,14 +236,35 @@ fun Grid(viewModel: GameViewModel) {
 }
 
 @Composable
-fun Win(viewModel: GameViewModel) {
+fun GameStateScreen(state: GameState, onEvent: (Event) -> Unit) {
+    Column {
+        TopPic(onEvent)
+        when (state) {
+            is GameState.WIN -> Win(onEvent)
+            is GameState.LOSE -> Lost(onEvent)
+            is GameState.MESSAGE -> MessageContent(state.message)
+        }
+    }
+}
+
+@Composable
+fun MessageContent(message: String) {
+    Box(Modifier.fillMaxSize()) {
+        Text(
+            message,
+            Modifier.padding(50.dp)
+        )
+    }
+}
+
+@Composable
+fun Win(onEvent: (Event) -> Unit) {
     Box(Modifier.fillMaxSize()) {
         Text("WON", Modifier.padding(50.dp))
         TextButton(
             modifier = Modifier.padding(100.dp),
             onClick = {
-                viewModel.incLevel()
-                viewModel.newGame()
+                onEvent.invoke(Event.Win)
             })
         {
             Text(text = "Go next", Modifier.padding(50.dp))
@@ -274,12 +273,12 @@ fun Win(viewModel: GameViewModel) {
 }
 
 @Composable
-fun Lost(viewModel: GameViewModel) {
+fun Lost(onEvent: (Event) -> Unit) {
     Box(Modifier.fillMaxSize()) {
         Text("LOST", Modifier.padding(50.dp, 50.dp))
         TextButton(
             modifier = Modifier.padding(100.dp),
-            onClick = { viewModel.newGame() })
+            onClick = { onEvent.invoke(Event.Lost) })
         {
             Text(text = "Try again", Modifier.padding(100.dp))
         }
@@ -321,10 +320,10 @@ private fun imageBitmap(type: Int): ImageBitmap {
 }
 
 @Composable
-fun TopPic(viewModel: GameViewModel) {
+fun TopPic(onEvent: (Event) -> Unit) {
 
     TextButton(
-        onClick = { viewModel.newGame() },
+        onClick = { onEvent.invoke(Event.NewGame) },
         modifier = Modifier
             .width(379.dp)
             .height(133.dp),
@@ -341,11 +340,14 @@ fun TopPic(viewModel: GameViewModel) {
 
 private fun DrawScope.drawHeroes(
     game: Game,
-    piece: ImageBitmap
+    piece: ImageBitmap,
+    elapsedMillis: Long
 ) {
-    for (heroes in game.board) {
-        for (hero in heroes) {
-            heroMap[hero.color]?.let { drawHero(piece, hero, it) }
+    elapsedMillis.let {
+        for (heroes in game.board) {
+            for (hero in heroes) {
+                heroMap[hero.color]?.let { drawHero(piece, hero, it) }
+            }
         }
     }
 }
