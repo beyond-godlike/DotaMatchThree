@@ -1,20 +1,40 @@
-# Compose
--keep class androidx.compose.** { *; }
+# ----------------------------
+# Kotlin & Compose
+# ----------------------------
 -keep class kotlin.Metadata { *; }
+-keep class androidx.compose.runtime.** { *; }
+-keepclassmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
 
-# Keep all Dagger/Hilt generated classes
--keep class dagger.** { *; }
+# ----------------------------
+# Dagger/Hilt
+# ----------------------------
+# Keep only generated Hilt classes
 -keep class hilt_*.** { *; }
--keep class com.example.dotamatchthree.** { *; }
+-keep class dagger.hilt.android.internal.** { *; }
 
-# Keep data classes serialization (если есть)
--keepclassmembers class * { <init>(...); }
+# ----------------------------
+# Gson (reflection)
+# ----------------------------
+# Keep only fields in data classes that are serialized
+-keepclassmembers class com.example.dotamatchthree.data.** {
+    <fields>;
+}
 
-#Gson — сериализация через reflection
--keep class com.example.dotamatchthree.data.** { *; }
-
-#Room
+# ----------------------------
+# Room
+# ----------------------------
+# Keep Room entities & DAO members
 -keep class androidx.room.** { *; }
--keepclasseswithmembers class * {
+-keepclassmembers class * {
     @androidx.room.* <fields>;
+}
+
+# ----------------------------
+# General
+# ----------------------------
+# Keep all constructors (needed for reflection)
+-keepclassmembers class * {
+    <init>(...);
 }
