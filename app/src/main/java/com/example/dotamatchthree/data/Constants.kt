@@ -4,11 +4,11 @@ import androidx.compose.ui.unit.IntOffset
 
 
 object Constants {
-    var screenWidth = 0.0f
-    var screenHeight = 0.0f
-    var cellWidth = 0.0f
-    var drawX = 0f
-    var drawY = 0f
+    var screenWidth = 0
+    var screenHeight = 0
+    var cellWidth = 0
+    var drawX = 0
+    var drawY = 0
 
     //val jsz = 32
     val jsz = 184

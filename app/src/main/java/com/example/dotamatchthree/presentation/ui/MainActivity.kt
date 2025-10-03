@@ -68,7 +68,6 @@ import com.example.dotamatchthree.presentation.ui.game.GameState
 import com.example.dotamatchthree.presentation.ui.game.GameViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
-import kotlin.math.abs
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -77,15 +76,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val displayMetrics = context.resources.displayMetrics
-            screenWidth = displayMetrics.widthPixels.toFloat()
-            screenHeight = displayMetrics.heightPixels.toFloat()
+            screenWidth = displayMetrics.widthPixels
+            screenHeight = displayMetrics.heightPixels
 
             cellWidth = (screenWidth / 9)
-            //drawX = ((screenWidth - cellWidth * 9) / 2)
-            //drawY = (cellWidth * 4)
 
-            drawX = 0.0f
-            drawY = 0.0f
+            drawX = 0
+            drawY = 0
 
             Column(
                 modifier = Modifier
@@ -110,7 +107,6 @@ fun Grid(
     game: Game,
     onEvent: (Event) -> Unit,
 ) {
-    val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
     val piece = ImageBitmap.imageResource(id = R.drawable.jq)
 
     var elapsedMillis by remember {
@@ -127,112 +123,94 @@ fun Grid(
     GameStateScreen(state, onEvent)
     TopLabel(game)
 
+    Box(
+        modifier = Modifier
+            .width((screenWidth - screenWidth / 5).dp)
+            .height((cellWidth * 9).dp)
+    ) {
+        GridBackground()
+
+        Canvas(
+            modifier = Modifier
+                .width((screenWidth - screenWidth / 5).dp)
+                .height((cellWidth * 9).dp)
+                .pointerInteropFilter {
+                    when (it.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            with(game) {
+                                oldX = it.x
+                                oldY = it.y
+                                posI = ((oldY - drawY) / cellWidth).toInt()
+                                posJ = ((oldX - drawX) / cellWidth).toInt()
+                                move = true
+                            }
+                        }
+
+                        MotionEvent.ACTION_MOVE -> {
+                            if (state == GameState.IDLE) {
+                                game.updateDirection(it.x, it.y)
+                                if (!game.move) onEvent(Event.UpdateState(GameState.SWAPPING))
+                            }
+                        }
+                    }
+                    return@pointerInteropFilter true
+                },
+
+            onDraw = {
+                drawHeroes(game, piece, elapsedMillis)
+
+                if (state != GameState.IDLE) {
+                    onEvent(Event.Update)
+                }
+            },
+            contentDescription = ""
+        )
+
+        BottomImage()
+    }
+}
+
+@Composable
+fun GridBackground() {
     Canvas(
         modifier = Modifier
             .width((screenWidth - screenWidth / 5).dp)
             .height((cellWidth * 9).dp)
-            .pointerInteropFilter {
-                when (it.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        with(game) {
-                            oldX = it.x
-                            oldY = it.y
-                            posI = ((oldY - drawY) / cellWidth).toInt()
-                            posJ = ((oldX - drawX) / cellWidth).toInt()
-                            move = true
-                        }
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        if (state == GameState.IDLE) {
-                            val newX = it.x
-                            val newY = it.y
-                            val deltaX = abs(newX - game.oldX)
-                            val deltaY = abs(newY - game.oldY)
-
-                            if (game.move && (deltaX > 30 || deltaY > 30)) {
-                                game.move = false
-                                game.direction = when {
-                                    deltaX > deltaY -> if (newX > game.oldX) "right" else "left"
-                                    else -> if (newY > game.oldY) "down" else "up"
-                                }
-
-                                // Calculate new position based on direction
-                                when (game.direction) {
-                                    "right" -> {
-                                        game.newPosJ = game.posJ + 1
-                                        game.newPosI = game.posI
-                                    }
-
-                                    "left" -> {
-                                        game.newPosJ = game.posJ - 1
-                                        game.newPosI = game.posI
-                                    }
-
-                                    "down" -> {
-                                        game.newPosI = game.posI + 1
-                                        game.newPosJ = game.posJ
-                                    }
-
-                                    "up" -> {
-                                        game.newPosI = game.posI - 1
-                                        game.newPosJ = game.posJ
-                                    }
-                                }
-
-                                onEvent.invoke(Event.UpdateState(GameState.SWAPPING))
-                            }
-                        }
-                    }
-                }
-                return@pointerInteropFilter true
-            },
-
-        onDraw = {
-            for (i in 0..9) {
-                for (j in 0..9) {
-                    drawLine(
-                        start = Offset(x = 0.0f, y = drawY + i * cellWidth),
-                        end = Offset(x = cellWidth * 9.0f, y = drawY + i * cellWidth),
-                        color = Color.LightGray
-                    )
-
-                    drawLine(
-                        start = Offset(x = j * cellWidth, y = drawY),
-                        end = Offset(x = j * cellWidth, y = drawY + cellWidth * 9),
-                        color = Color.LightGray
-                    )
-                }
-            }
-
-            drawHeroes(game, piece, elapsedMillis)
-
-            when (state) {
-                is GameState.IDLE -> {
-
-                }
-
-                is GameState.UPDATE,
-                is GameState.CHECKSWAPPING,
-                is GameState.SWAPPING,
-                is GameState.CRUSHING -> {
-                    onEvent.invoke(Event.Update)
-                }
-            }
-
-
-            drawImage(
-                image = bottom,
-                srcOffset = IntOffset(0, 0),
-                srcSize = IntSize(1834, 979),
-                dstOffset = IntOffset(60, (drawY.toInt() + cellWidth.toInt() * 10)),
-                dstSize = IntSize((screenWidth - screenWidth / 5).toInt(), (cellWidth * 4).toInt())
+    ) {
+        val lines = (0..9).map { it * cellWidth }
+        for (y in lines) {
+            drawLine(
+                start = Offset(0f, (drawY + y).toFloat()),
+                end = Offset(cellWidth * 9f, (drawY + y).toFloat()),
+                color = Color.LightGray
             )
+        }
+        for (x in lines) {
+            drawLine(
+                start = Offset(x.toFloat(), drawY.toFloat()),
+                end = Offset(x.toFloat(), (drawY + cellWidth * 9).toFloat()),
+                color = Color.LightGray
+            )
+        }
+    }
+}
 
+@Composable
+fun BottomImage() {
+    val bottom = ImageBitmap.imageResource(id = R.drawable.bottom)
 
-        },
-        contentDescription = ""
-    )
+    Canvas(modifier = Modifier) {
+        drawImage(
+            image = bottom,
+            srcOffset = IntOffset(0, 0),
+            srcSize = IntSize(1834, 979),
+            dstOffset = IntOffset(60, (drawY + cellWidth * 10)),
+            dstSize = IntSize(
+                (screenWidth - screenWidth / 5),
+                (cellWidth * 4)
+            )
+        )
+    }
 }
 
 @Composable
@@ -278,7 +256,7 @@ fun Lost(onEvent: (Event) -> Unit) {
         Text("LOST", Modifier.padding(50.dp, 50.dp))
         TextButton(
             modifier = Modifier.padding(100.dp),
-            onClick = { onEvent.invoke(Event.Lost) })
+            onClick = { onEvent(Event.Lost) })
         {
             Text(text = "Try again", Modifier.padding(100.dp))
         }
@@ -323,7 +301,7 @@ private fun imageBitmap(type: Int): ImageBitmap {
 fun TopPic(onEvent: (Event) -> Unit) {
 
     TextButton(
-        onClick = { onEvent.invoke(Event.NewGame) },
+        onClick = { onEvent(Event.NewGame) },
         modifier = Modifier
             .width(379.dp)
             .height(133.dp),
@@ -361,8 +339,8 @@ private fun DrawScope.drawHero(
         image = piece,
         srcOffset = srcOffset,
         srcSize = IntSize(jsz, jsz),
-        dstOffset = IntOffset(hero.posX.toInt(), hero.posY.toInt()),
-        dstSize = IntSize(cellWidth.toInt(), cellWidth.toInt())
+        dstOffset = IntOffset(hero.posX, hero.posY),
+        dstSize = IntSize(cellWidth, cellWidth)
     )
 }
 

@@ -1,4 +1,3 @@
 package com.example.dotamatchthree.data
 
-
-data class Hero(var posX: Float, var posY: Float, var color: Int)
+data class Hero(var posX: Int, var posY: Int, var color: Int)

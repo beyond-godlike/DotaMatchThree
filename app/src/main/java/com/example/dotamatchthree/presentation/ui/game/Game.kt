@@ -6,17 +6,18 @@ import com.example.dotamatchthree.data.Hero
 import com.example.dotamatchthree.data.Level
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.abs
 
 class Game {
     lateinit var level: Level
 
     var board: Array<Array<Hero>> = Array(9) { row ->
         Array(9) { col ->
-            Hero(row.toFloat(), col.toFloat(), 0)
+            Hero(row, col, 0)
         }
     }
     var topBoard: Array<Hero> = Array(9) { row ->
-        Hero(0.0f, row.toFloat(), 0)
+        Hero(0, row, 0)
     }
     val search: ArrayList<ArrayList<Point>> = ArrayList()
 
@@ -189,32 +190,19 @@ class Game {
         }
     }
 
-    fun allowCrushing(points: ArrayList<Point>): Boolean {
-        var allow = true
-        for (i in 0 until points.size) {
-            if (points[i].x < board.size - 1) {
-                if (board[points[i].x + 1][points[i].y].color == 0) allow = false
-            }
+    fun allowCrushing(points: List<Point>): Boolean {
+        return points.all { point ->
+            point.x == board.size - 1 || board[point.x + 1][point.y].color != 0
         }
-        return allow
     }
 
     fun checkDrop(): Boolean {
-        var drop = false
-        for (jewels in board) {
-            for (j in jewels) {
-                if (j.color == 0) {
-                    drop = true
-                    break
-                }
-            }
+        return board.any { jewels ->
+            jewels.any { it.color == 0 }
         }
-        return drop
     }
 
-    private fun generateNewJewels(): Int {
-        return (level.rangeFrom until level.rangeTo).random()
-    }
+    private fun generateNewJewels() = (level.rangeFrom until level.rangeTo).random()
 
 
     fun fillTopBoard() {
@@ -262,5 +250,24 @@ class Game {
             }
         }
     }
+    fun updateDirection(newX: Float, newY: Float) {
+        val deltaX = abs(newX - oldX)
+        val deltaY = abs(newY - oldY)
 
+        if (move && (deltaX > 30 || deltaY > 30)) {
+            move = false
+            direction = if (deltaX > deltaY) {
+                if (newX > oldX) "right" else "left"
+            } else {
+                if (newY > oldY) "down" else "up"
+            }
+
+            when (direction) {
+                "right" -> { newPosJ = posJ + 1; newPosI = posI }
+                "left"  -> { newPosJ = posJ - 1; newPosI = posI }
+                "down"  -> { newPosI = posI + 1; newPosJ = posJ }
+                "up"    -> { newPosI = posI - 1; newPosJ = posJ }
+            }
+        }
+    }
 }

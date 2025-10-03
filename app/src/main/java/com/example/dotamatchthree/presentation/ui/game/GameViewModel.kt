@@ -124,35 +124,35 @@ class GameViewModel @Inject constructor(
     }
 
     fun jsonString(path: String): String {
-            return context.assets.open(path)
-                .bufferedReader()
-                .use { it.readText() }
-        }
+        return context.assets.open(path)
+            .bufferedReader()
+            .use { it.readText() }
+    }
 
-        fun incLevel() {
-            val l = prefsHelper.getLevel() + 1
-            prefsHelper.saveLevel(l)
-        }
+    fun incLevel() {
+        val l = prefsHelper.getLevel() + 1
+        prefsHelper.saveLevel(l)
+    }
 
-        fun loadLevel(): Level {
-            val currentLevel = prefsHelper.getLevel()
-            return db.getLevel(currentLevel)
-        }
+    fun loadLevel(): Level {
+        val currentLevel = prefsHelper.getLevel()
+        return db.getLevel(currentLevel)
+    }
 
-        // todo only when 1st time
-        fun createDb() {
-            viewModelScope.launch {
-                try {
-                    val list = object : TypeToken<List<Level>>() {}.type
-                    val lvls: List<Level> = Gson().fromJson(jsonString(Constants.jsonPath), list)
+    // todo only when 1st time
+    fun createDb() {
+        viewModelScope.launch {
+            try {
+                val list = object : TypeToken<List<Level>>() {}.type
+                val lvls: List<Level> = Gson().fromJson(jsonString(Constants.jsonPath), list)
 
-                    db.insertLevels(lvls)
-                } catch (e: Exception) {
-                    updateState(GameState.MESSAGE("not added"))
-                }
+                db.insertLevels(lvls)
+            } catch (e: Exception) {
+                updateState(GameState.MESSAGE("not added"))
             }
         }
     }
+}
 
 sealed class Event : ViewEvent {
     //data class NewGame(val level: Int) : Event()
