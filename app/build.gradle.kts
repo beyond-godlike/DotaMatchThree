@@ -48,7 +48,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -126,7 +127,7 @@ dependencies {
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 
     androidTestImplementation ("com.google.dagger:hilt-android-testing:${daggerVersion}")
-    kspAndroidTest("com.google.dagger:hilt-android-comiler:${daggerVersion}")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:${daggerVersion}")
 
     androidTestImplementation ("org.mockito:mockito-android:${mockitoVersion}")
     androidTestImplementation ("io.mockk:mockk-android:${mockkVersion}")
