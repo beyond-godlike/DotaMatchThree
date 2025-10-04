@@ -1,6 +1,6 @@
 package com.example.dotamatchthree.presentation.ui.game
 
-import android.content.Context
+import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.example.dotamatchthree.data.Constants
 import com.example.dotamatchthree.data.Level
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
-    val context: Context,
+    val context: Application,
     val db: LevelDao,
     val prefsHelper: PrefsHelper,
     val game: Game
